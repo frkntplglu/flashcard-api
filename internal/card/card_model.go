@@ -8,5 +8,10 @@ type Card struct {
 	Content   string     `json:"content"`
 	CreatedAt *time.Time `json:"created_at"`
 	UpdatedAt *time.Time `json:"updated_at"`
-	Status    int        `json:"status"`
+	IsLearned bool       `json:"is_learned"`
+}
+
+type CardBody struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }
