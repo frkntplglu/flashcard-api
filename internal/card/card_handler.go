@@ -1,6 +1,10 @@
 package card
 
-import "github.com/gin-gonic/gin"
+import (
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+)
 
 type CardHandler struct {
 	CardRepository *CardRepository
@@ -22,7 +26,27 @@ func (h *CardHandler) GetCards(c *gin.Context) {
 	})
 }
 
-func (h *CardHandler) AddCards(c *gin.Context) {
+func (h *CardHandler) GetCardById(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Invalid id",
+		})
+		return
+	}
+	card, err := h.CardRepository.GetCardById(id)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	}
+	c.JSON(200, gin.H{
+		"card": card,
+	})
+}
+
+func (h *CardHandler) AddCard(c *gin.Context) {
 	var card CardBody
 	if c.ShouldBindJSON(&card) != nil {
 		c.JSON(400, gin.H{
@@ -43,7 +67,47 @@ func (h *CardHandler) AddCards(c *gin.Context) {
 	})
 }
 
+func (h *CardHandler) UpdateCard(c *gin.Context) {
+	var card CardBody
+	if c.ShouldBindJSON(&card) != nil {
+		c.JSON(400, gin.H{
+			"error": "Invalid body",
+		})
+		return
+	}
+
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.JSON(400, gin.H{
+			"error": "Invalid id",
+		})
+		return
+	}
+	existingCard, err := h.CardRepository.GetCardById(id)
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	err = h.CardRepository.UpdateCard(existingCard.Id, card)
+
+	if err != nil {
+		c.JSON(500, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	c.JSON(200, gin.H{
+		"card": card,
+	})
+}
+
 func (h *CardHandler) SetRoutes(r *gin.Engine) {
 	r.GET("/cards", h.GetCards)
-	r.POST("/cards", h.AddCards)
+	r.GET("/cards/:id", h.GetCardById)
+	r.POST("/cards", h.AddCard)
+	r.PUT("/cards/:id", h.UpdateCard)
 }
