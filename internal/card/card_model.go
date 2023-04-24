@@ -15,3 +15,9 @@ type CardBody struct {
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }
+
+type CardFields struct {
+	Title     string `json:"title"`
+	Content   string `json:"content"`
+	IsLearned *bool  `json:"is_learned"`
+}

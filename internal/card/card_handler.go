@@ -90,7 +90,6 @@ func (h *CardHandler) AddCard(c *gin.Context) {
 		})
 		return
 	}
-	// TO DO : Get the card from the database and return it or use pointer
 	c.JSON(http.StatusCreated, models.SuccessResponse{
 		Success: true,
 		Data:    card,
@@ -98,8 +97,8 @@ func (h *CardHandler) AddCard(c *gin.Context) {
 }
 
 func (h *CardHandler) UpdateCard(c *gin.Context) {
-	var card CardBody
-	if c.ShouldBindJSON(&card) != nil {
+	var cardBody CardFields
+	if c.ShouldBindJSON(&cardBody) != nil {
 		c.JSON(http.StatusBadRequest, models.FailedResponse{
 			Success: false,
 			Error: models.Error{
@@ -134,7 +133,8 @@ func (h *CardHandler) UpdateCard(c *gin.Context) {
 		})
 		return
 	}
-	err = h.CardRepository.UpdateCard(existingCard.Id, card)
+
+	err = h.CardRepository.UpdateCard(existingCard.Id, existingCard, cardBody)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.FailedResponse{
@@ -149,7 +149,39 @@ func (h *CardHandler) UpdateCard(c *gin.Context) {
 
 	c.JSON(http.StatusOK, models.SuccessResponse{
 		Success: true,
-		Data:    card,
+		Data:    existingCard,
+	})
+}
+
+func (h *CardHandler) DeleteCard(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, models.FailedResponse{
+			Success: false,
+			Error: models.Error{
+				Message: "Invalid id",
+				Code:    http.StatusBadRequest,
+			},
+		})
+		return
+	}
+	err = h.CardRepository.DeleteCard(id)
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, models.FailedResponse{
+			Success: false,
+			Error: models.Error{
+				Message: err.Error(),
+				Code:    http.StatusNotFound,
+			},
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.SuccessResponse{
+		Success: true,
+		Data:    "Card has been deleted successfully",
 	})
 }
 
@@ -158,4 +190,5 @@ func (h *CardHandler) SetRoutes(r *gin.Engine) {
 	r.GET("/cards/:id", h.GetCardById)
 	r.POST("/cards", h.AddCard)
 	r.PUT("/cards/:id", h.UpdateCard)
+	r.DELETE("/cards/:id", h.DeleteCard)
 }

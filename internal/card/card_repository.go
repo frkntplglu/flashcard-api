@@ -60,10 +60,33 @@ func (r *CardRepository) AddCard(cardBody CardBody) error {
 	return nil
 }
 
-func (r *CardRepository) UpdateCard(id int, cardBody CardBody) error {
-	updateQuery := `update cards set title=$1, content=$2, updated_at=$3 where id=$4`
-	_, err := r.Db.Exec(updateQuery, cardBody.Title, cardBody.Content, time.Now(), id)
-	fmt.Println("err :", err)
+func (r *CardRepository) UpdateCard(id int, card *Card, fields CardFields) error {
+
+	updateQuery := `UPDATE cards SET `
+	if fields.Title != "" {
+		updateQuery += `title='` + fields.Title + `', `
+	}
+	if fields.Content != "" {
+		updateQuery += `content='` + fields.Content + `', `
+	}
+	if *fields.IsLearned {
+		updateQuery += `is_learned='` + "true" + `', `
+	} else {
+		updateQuery += `is_learned='` + "false" + `', `
+	}
+	updateQuery += `updated_at=$1 WHERE id=$2 RETURNING *;`
+	fmt.Println(updateQuery)
+	row := r.Db.QueryRow(updateQuery, time.Now(), id)
+
+	if row.Err() != nil {
+		return row.Err()
+	}
+	return row.Scan(&card.Title, &card.Content, &card.UpdatedAt, &card.Id, &card.CreatedAt, &card.IsLearned)
+}
+
+func (r *CardRepository) DeleteCard(id int) error {
+	deleteQuery := `DELETE FROM cards WHERE id=$1`
+	_, err := r.Db.Exec(deleteQuery, id)
 	if err != nil {
 		return err
 	}
