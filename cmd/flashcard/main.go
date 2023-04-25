@@ -8,23 +8,19 @@ import (
 	"github.com/frkntplglu/flashcard-api/internal/card"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-)
-
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "postgres"
-	dbname   = "flashcard"
+	"github.com/spf13/viper"
 )
 
 func main() {
+	viper.SetConfigFile(".env")
+	viper.ReadInConfig()
 	r := gin.Default()
-
+	fmt.Println(viper.Get("DB_HOST"))
+	fmt.Println(viper.Get("DB_PORT"))
 	// Db
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
+		viper.Get("DB_HOST"), viper.GetInt("DB_PORT"), viper.Get("DB_USER"), viper.Get("DB_PASSWORD"), viper.Get("DB_NAME"))
 	db, err := sql.Open("postgres", psqlInfo)
 
 	if err != nil {
@@ -42,5 +38,5 @@ func main() {
 	cardHandler := card.NewCardHandler(cardRepository)
 	cardHandler.SetRoutes(r)
 
-	r.Run() // listen and serve on 0.0.0.0:8080
+	r.Run(fmt.Sprintf(":%v", viper.Get("PORT")))
 }
